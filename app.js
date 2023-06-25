@@ -1,69 +1,47 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
-const methodOverride = require("method-override");
 
-main().catch((err) => console.log(err));
-
-async function main() {
-  await mongoose.connect("mongodb://127.0.0.1:27017/tasksDB");
-}
-
-const app = express();
-
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static("public"));
-app.use(methodOverride("_method"));
+mongoose.connect("mongodb://localhost:27017/taskDB", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 const taskSchema = new mongoose.Schema({
-  name: String,
-  completed: Boolean,
+  name: {
+    type: String,
+    required: true,
+  },
 });
 
-const Task = mongoose.model("Tasks", taskSchema);
+const Task = mongoose.model("Task", taskSchema);
 
-app.set("view engine", "ejs");
-
-app.get("/", async function (req, res) {
-  try {
-    const today = new Date();
-    const options = {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-    };
-    const day = today.toLocaleDateString("en-US", options);
-
-    const tasks = await Task.find({}, "name").exec();
-    res.render("list", { listTitle: day, newListItem: tasks });
-  } catch (err) {
-    console.log(err);
-  }
+const task1 = new Task({
+  name: "Buy groceries",
 });
 
-app.post("/", async function (req, res) {
-  try {
-    const taskName = req.body.newItem;
-    const task = new Task({ name: taskName, completed: false });
-    await task.save();
-    res.redirect("/");
-  } catch (err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
-});
+task1.save();
 
-app.delete("/tasks/:id", async function (req, res) {
-  try {
-    const taskId = req.params.id;
-    await Task.findByIdAndRemove(taskId);
-    res.sendStatus(200);
-  } catch (err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
-});
+Task.find()
+  .then(function (tasks) {
+    console.log(tasks);
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
 
-app.listen(3000, function () {
-  console.log("Server started on port 3000.");
-});
+Task.updateOne({ _id: "648f0bc73e6a7dc8334462ec" }, { name: "walk" })
+  .then(function (result) {
+    console.log("Task updated successfully.");
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
+
+Task.deleteOne({ _id: "648f0bd63b455fdb0afe712f" })
+  .then(function (result) {
+    console.log("Task deleted successfully.");
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
